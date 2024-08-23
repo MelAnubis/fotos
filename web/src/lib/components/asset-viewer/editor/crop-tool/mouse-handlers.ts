@@ -4,11 +4,11 @@ import {
   cropImageSize,
   cropSettings,
   cropSettingsChanged,
-  normaizedRorateDegrees,
+  normalizedRotateDegrees,
   rotateDegrees,
   showCancelConfirmDialog,
-  type CropSettings,
 } from '$lib/stores/asset-editor.store';
+import type { CropOptionsDto } from '@immich/sdk';
 import { get } from 'svelte/store';
 import { adjustDimensions, keepAspectRatio } from './crop-settings';
 import {
@@ -89,7 +89,7 @@ function getMousePosition(e: MouseEvent) {
   let offsetX = e.clientX;
   let offsetY = e.clientY;
   const clienRect = getBoundingClientRectCached(get(cropAreaEl));
-  const rotateDeg = get(normaizedRorateDegrees);
+  const rotateDeg = get(normalizedRotateDegrees);
 
   if (rotateDeg == 90) {
     offsetX = e.clientY - (clienRect?.top ?? 0);
@@ -125,7 +125,7 @@ function getBoundingClientRectCached(el: HTMLElement | null) {
   return getBoundingClientRectCache.data;
 }
 
-function isOnCropBoundary(mouseX: number, mouseY: number, crop: CropSettings) {
+function isOnCropBoundary(mouseX: number, mouseY: number, crop: CropOptionsDto) {
   const { x, y, width, height } = crop;
   const sensitivity = 10;
   const cornerSensitivity = 15;
@@ -184,7 +184,7 @@ function isOnCropBoundary(mouseX: number, mouseY: number, crop: CropSettings) {
   };
 }
 
-function isInCropArea(mouseX: number, mouseY: number, crop: CropSettings) {
+function isInCropArea(mouseX: number, mouseY: number, crop: CropOptionsDto) {
   const { x, y, width, height } = crop;
   return mouseX >= x && mouseX <= x + width && mouseY >= y && mouseY <= y + height;
 }
@@ -429,7 +429,7 @@ function updateCursor(mouseX: number, mouseY: number) {
   }
 
   const crop = get(cropSettings);
-  const rotateDeg = get(normaizedRorateDegrees);
+  const rotateDeg = get(normalizedRotateDegrees);
 
   let {
     onLeftBoundary,

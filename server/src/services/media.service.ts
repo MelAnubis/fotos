@@ -1,4 +1,5 @@
 import { Inject, Injectable, UnsupportedMediaTypeException } from '@nestjs/common';
+import _ from 'lodash';
 import { dirname } from 'node:path';
 import {
   AudioCodec,
@@ -30,6 +31,7 @@ import {
 } from 'src/interfaces/job.interface';
 import { ILoggerRepository } from 'src/interfaces/logger.interface';
 import { AudioStreamInfo, IMediaRepository, VideoFormat, VideoStreamInfo } from 'src/interfaces/media.interface';
+import { ExifOrientation } from 'src/interfaces/metadata.interface';
 import { IMoveRepository } from 'src/interfaces/move.interface';
 import { IPersonRepository } from 'src/interfaces/person.interface';
 import { IStorageRepository } from 'src/interfaces/storage.interface';
@@ -219,12 +221,20 @@ export class MediaService {
         try {
           const useExtracted = didExtract && (await this.shouldUseExtractedImage(extractedPath, image.previewSize));
           const colorspace = this.isSRGB(asset) ? Colorspace.SRGB : image.colorspace;
+          const { cropLeft, cropTop, cropWidth, cropHeight } = asset.exifInfo ?? {};
+          const crop = _.every([cropLeft, cropTop, cropWidth, cropHeight], _.isNumber)
+            ? { x: cropLeft!, y: cropTop!, width: cropWidth!, height: cropHeight! }
+            : undefined;
           const imageOptions = {
             format,
             size,
             colorspace,
             quality: image.quality,
             processInvalidImages: process.env.IMMICH_PROCESS_INVALID_IMAGES === 'true',
+            ...this.decodeExifOrientation(
+              (asset.exifInfo?.orientation as ExifOrientation) ?? ExifOrientation.Horizontal,
+            ),
+            crop,
           };
 
           const outputPath = useExtracted ? extractedPath : asset.originalPath;
@@ -505,6 +515,40 @@ export class MediaService {
       // assume sRGB for images with no relevant metadata
       return true;
     }
+  }
+
+  private decodeExifOrientation(orientation: ExifOrientation) {
+    let angle = 0;
+    switch (orientation) {
+      case ExifOrientation.Rotate180:
+      case ExifOrientation.MirrorVertical: {
+        angle = 180;
+        break;
+      }
+      case ExifOrientation.Rotate90CW:
+      case ExifOrientation.MirrorHorizontalRotate90CW: {
+        angle = 90;
+        break;
+      }
+      case ExifOrientation.MirrorHorizontalRotate270CW:
+      case ExifOrientation.Rotate270CW: {
+        angle = 270;
+        break;
+      }
+      case ExifOrientation.Horizontal:
+      case ExifOrientation.MirrorHorizontal: {
+        angle = 0;
+        break;
+      }
+    }
+    const mirror = [
+      ExifOrientation.MirrorHorizontal,
+      ExifOrientation.MirrorVertical,
+      ExifOrientation.MirrorHorizontalRotate90CW,
+      ExifOrientation.MirrorHorizontalRotate270CW,
+    ].includes(orientation);
+
+    return { angle, mirror };
   }
 
   private parseBitrateToBps(bitrateString: string) {

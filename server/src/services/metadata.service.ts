@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { ContainerDirectoryItem, ExifDateTime, Tags } from 'exiftool-vendored';
+import { ContainerDirectoryItem, ExifDateTime, Tags, WriteTags } from 'exiftool-vendored';
 import { firstDateTime } from 'exiftool-vendored/dist/FirstDateTime';
 import _ from 'lodash';
 import { Duration } from 'luxon';
@@ -30,7 +30,7 @@ import {
 import { ILoggerRepository } from 'src/interfaces/logger.interface';
 import { IMapRepository } from 'src/interfaces/map.interface';
 import { IMediaRepository } from 'src/interfaces/media.interface';
-import { IMetadataRepository, ImmichTags } from 'src/interfaces/metadata.interface';
+import { ExifOrientation, IMetadataRepository, ImmichTags } from 'src/interfaces/metadata.interface';
 import { IMoveRepository } from 'src/interfaces/move.interface';
 import { IPersonRepository } from 'src/interfaces/person.interface';
 import { IStorageRepository } from 'src/interfaces/storage.interface';
@@ -49,17 +49,6 @@ const EXIF_DATE_TAGS: Array<keyof Tags> = [
   'MediaCreateDate',
   'DateTimeCreated',
 ];
-
-export enum Orientation {
-  Horizontal = '1',
-  MirrorHorizontal = '2',
-  Rotate180 = '3',
-  MirrorVertical = '4',
-  MirrorHorizontalRotate270CW = '5',
-  Rotate90CW = '6',
-  MirrorHorizontalRotate90CW = '7',
-  Rotate270CW = '8',
-}
 
 type ExifEntityWithoutGeocodeAndTypeOrm = Omit<ExifEntity, 'city' | 'state' | 'country' | 'description'> & {
   dateTimeOriginal: Date;
@@ -279,21 +268,26 @@ export class MetadataService {
   }
 
   async handleSidecarWrite(job: ISidecarWriteJob): Promise<JobStatus> {
-    const { id, description, dateTimeOriginal, latitude, longitude, rating } = job;
+    const { id, description, dateTimeOriginal, latitude, longitude, orientation, rating, crop } = job;
     const [asset] = await this.assetRepository.getByIds([id]);
     if (!asset) {
       return JobStatus.FAILED;
     }
 
     const sidecarPath = asset.sidecarPath || `${asset.originalPath}.xmp`;
-    const exif = _.omitBy<Tags>(
+    const exif = _.omitBy<WriteTags>(
       {
         Description: description,
         ImageDescription: description,
         DateTimeOriginal: dateTimeOriginal,
         GPSLatitude: latitude,
         GPSLongitude: longitude,
+        'Orientation#': _.isUndefined(orientation) ? undefined : Number.parseInt(orientation ?? '1', 10),
         Rating: rating,
+        CropLeft: crop?.x?.toString(),
+        CropTop: crop?.y.toString(),
+        CropWidth: crop?.width,
+        CropHeight: crop?.height,
       },
       _.isUndefined,
     );
@@ -488,6 +482,10 @@ export class MetadataService {
       assetId: asset.id,
       bitsPerSample: this.getBitsPerSample(tags),
       colorspace: tags.ColorSpace ?? null,
+      cropLeft: _.isUndefined(tags.CropLeft) ? null : Number.parseInt(tags.CropLeft),
+      cropTop: _.isUndefined(tags.CropTop) ? null : Number.parseInt(tags.CropTop),
+      cropWidth: validate(tags.CropWidth),
+      cropHeight: validate(tags.CropHeight),
       dateTimeOriginal: this.getDateTimeOriginal(tags) ?? asset.fileCreatedAt,
       description: String(tags.ImageDescription || tags.Description || '').trim(),
       exifImageHeight: validate(tags.ImageHeight),
@@ -560,19 +558,19 @@ export class MetadataService {
     if (videoStreams[0]) {
       switch (videoStreams[0].rotation) {
         case -90: {
-          exifData.orientation = Orientation.Rotate90CW;
+          exifData.orientation = ExifOrientation.Rotate90CW;
           break;
         }
         case 0: {
-          exifData.orientation = Orientation.Horizontal;
+          exifData.orientation = ExifOrientation.Horizontal;
           break;
         }
         case 90: {
-          exifData.orientation = Orientation.Rotate270CW;
+          exifData.orientation = ExifOrientation.Rotate270CW;
           break;
         }
         case 180: {
-          exifData.orientation = Orientation.Rotate180;
+          exifData.orientation = ExifOrientation.Rotate180;
           break;
         }
       }

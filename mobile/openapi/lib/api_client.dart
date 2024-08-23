@@ -297,6 +297,8 @@ class ApiClient {
           return CreateProfileImageResponseDto.fromJson(value);
         case 'CreateTagDto':
           return CreateTagDto.fromJson(value);
+        case 'CropOptionsDto':
+          return CropOptionsDto.fromJson(value);
         case 'DownloadArchiveInfo':
           return DownloadArchiveInfo.fromJson(value);
         case 'DownloadInfoDto':
@@ -317,6 +319,8 @@ class ApiClient {
           return EmailNotificationsUpdate.fromJson(value);
         case 'EntityType':
           return EntityTypeTypeTransformer().decode(value);
+        case 'ExifOrientation':
+          return ExifOrientationTypeTransformer().decode(value);
         case 'ExifResponseDto':
           return ExifResponseDto.fromJson(value);
         case 'FaceDto':

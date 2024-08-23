@@ -16,6 +16,7 @@ import {
 import { BulkIdsDto } from 'src/dtos/asset-ids.response.dto';
 import { AssetType } from 'src/enum';
 import { AssetStats } from 'src/interfaces/asset.interface';
+import { CropOptions, ExifOrientation } from 'src/interfaces/metadata.interface';
 import { Optional, ValidateBoolean, ValidateUUID } from 'src/validation';
 
 export class DeviceIdDto {
@@ -64,10 +65,40 @@ export class AssetBulkUpdateDto extends UpdateAssetBase {
   duplicateId?: string | null;
 }
 
+export class CropOptionsDto implements CropOptions {
+  @IsInt()
+  @IsPositive()
+  @Type(() => Number)
+  x!: number;
+
+  @IsInt()
+  @IsPositive()
+  @Type(() => Number)
+  y!: number;
+
+  @IsInt()
+  @IsPositive()
+  @Type(() => Number)
+  width!: number;
+
+  @IsInt()
+  @IsPositive()
+  @Type(() => Number)
+  height!: number;
+}
+
 export class UpdateAssetDto extends UpdateAssetBase {
   @Optional()
   @IsString()
   description?: string;
+
+  @Optional()
+  @ApiProperty({ enumName: 'ExifOrientation', enum: ExifOrientation })
+  @IsEnum(ExifOrientation)
+  orientation?: ExifOrientation;
+
+  @Optional()
+  crop?: CropOptionsDto;
 }
 
 export class RandomAssetsDto {

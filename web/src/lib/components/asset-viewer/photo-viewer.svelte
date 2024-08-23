@@ -154,7 +154,11 @@
       <LoadingSpinner />
     </div>
   {:else if !imageError}
-    <div use:zoomImageAction class="h-full w-full" transition:fade={{ duration: haveFadeTransition ? 150 : 0 }}>
+    <div
+      use:zoomImageAction
+      class="h-full w-full duration-500"
+      transition:fade={{ duration: haveFadeTransition ? 150 : 0 }}
+    >
       {#if $slideshowState !== SlideshowState.None && $slideshowLook === SlideshowLook.BlurredBackground}
         <img
           src={assetFileUrl}

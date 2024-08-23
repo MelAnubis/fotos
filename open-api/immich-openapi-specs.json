@@ -8704,6 +8704,33 @@
         ],
         "type": "object"
       },
+      "CropOptionsDto": {
+        "properties": {
+          "height": {
+            "minimum": 1,
+            "type": "number"
+          },
+          "width": {
+            "minimum": 1,
+            "type": "number"
+          },
+          "x": {
+            "minimum": 1,
+            "type": "number"
+          },
+          "y": {
+            "minimum": 1,
+            "type": "number"
+          }
+        },
+        "required": [
+          "height",
+          "width",
+          "x",
+          "y"
+        ],
+        "type": "object"
+      },
       "DownloadArchiveInfo": {
         "properties": {
           "assetIds": {
@@ -8868,6 +8895,19 @@
         ],
         "type": "string"
       },
+      "ExifOrientation": {
+        "enum": [
+          "1",
+          "2",
+          "3",
+          "4",
+          "5",
+          "6",
+          "7",
+          "8"
+        ],
+        "type": "string"
+      },
       "ExifResponseDto": {
         "properties": {
           "city": {
@@ -8879,6 +8919,26 @@
             "default": null,
             "nullable": true,
             "type": "string"
+          },
+          "cropHeight": {
+            "default": null,
+            "nullable": true,
+            "type": "number"
+          },
+          "cropLeft": {
+            "default": null,
+            "nullable": true,
+            "type": "number"
+          },
+          "cropTop": {
+            "default": null,
+            "nullable": true,
+            "type": "number"
+          },
+          "cropWidth": {
+            "default": null,
+            "nullable": true,
+            "type": "number"
           },
           "dateTimeOriginal": {
             "default": null,
@@ -11968,6 +12028,9 @@
       },
       "UpdateAssetDto": {
         "properties": {
+          "crop": {
+            "$ref": "#/components/schemas/CropOptionsDto"
+          },
           "dateTimeOriginal": {
             "type": "string"
           },
@@ -11985,6 +12048,9 @@
           },
           "longitude": {
             "type": "number"
+          },
+          "orientation": {
+            "$ref": "#/components/schemas/ExifOrientation"
           },
           "rating": {
             "maximum": 5,

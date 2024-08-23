@@ -148,6 +148,10 @@ export type AlbumUserResponseDto = {
 export type ExifResponseDto = {
     city?: string | null;
     country?: string | null;
+    cropHeight?: number | null;
+    cropLeft?: number | null;
+    cropTop?: number | null;
+    cropWidth?: number | null;
     dateTimeOriginal?: string | null;
     description?: string | null;
     exifImageHeight?: number | null;
@@ -385,13 +389,21 @@ export type AssetStatsResponseDto = {
     total: number;
     videos: number;
 };
+export type CropOptionsDto = {
+    height: number;
+    width: number;
+    x: number;
+    y: number;
+};
 export type UpdateAssetDto = {
+    crop?: CropOptionsDto;
     dateTimeOriginal?: string;
     description?: string;
     isArchived?: boolean;
     isFavorite?: boolean;
     latitude?: number;
     longitude?: number;
+    orientation?: ExifOrientation;
     rating?: number;
 };
 export type AssetMediaReplaceDto = {
@@ -3280,6 +3292,16 @@ export enum AssetJobName {
     RegenerateThumbnail = "regenerate-thumbnail",
     RefreshMetadata = "refresh-metadata",
     TranscodeVideo = "transcode-video"
+}
+export enum ExifOrientation {
+    $1 = "1",
+    $2 = "2",
+    $3 = "3",
+    $4 = "4",
+    $5 = "5",
+    $6 = "6",
+    $7 = "7",
+    $8 = "8"
 }
 export enum AssetMediaSize {
     Preview = "preview",

@@ -7,6 +7,7 @@
   import DownloadAction from '$lib/components/asset-viewer/actions/download-action.svelte';
   import FavoriteAction from '$lib/components/asset-viewer/actions/favorite-action.svelte';
   import RestoreAction from '$lib/components/asset-viewer/actions/restore-action.svelte';
+  import RotateAction from '$lib/components/asset-viewer/actions/rotate-action.svelte';
   import SetAlbumCoverAction from '$lib/components/asset-viewer/actions/set-album-cover-action.svelte';
   import SetProfilePictureAction from '$lib/components/asset-viewer/actions/set-profile-picture-action.svelte';
   import ShareAction from '$lib/components/asset-viewer/actions/share-action.svelte';
@@ -15,6 +16,7 @@
   import CircleIconButton from '$lib/components/elements/buttons/circle-icon-button.svelte';
   import ButtonContextMenu from '$lib/components/shared-components/context-menu/button-context-menu.svelte';
   import MenuOption from '$lib/components/shared-components/context-menu/menu-option.svelte';
+  import { ProjectionType } from '$lib/constants';
   import { user } from '$lib/stores/user.store';
   import { photoZoomState } from '$lib/stores/zoom-image.store';
   import { getAssetJobName, getSharedLink } from '$lib/utils';
@@ -32,6 +34,7 @@
     mdiContentCopy,
     mdiDatabaseRefreshOutline,
     mdiDotsVertical,
+    mdiImageEditOutline,
     mdiImageRefreshOutline,
     mdiMagnifyMinusOutline,
     mdiMagnifyPlusOutline,
@@ -52,22 +55,22 @@
   export let onRunJob: (name: AssetJobName) => void;
   export let onPlaySlideshow: () => void;
   export let onShowDetail: () => void;
-  // export let showEditorHandler: () => void;
+  export let showEditorHandler: () => void;
   export let onClose: () => void;
 
   const sharedLink = getSharedLink();
 
   $: isOwner = $user && asset.ownerId === $user?.id;
   $: showDownloadButton = sharedLink ? sharedLink.allowDownload : !asset.isOffline;
-  // $: showEditorButton =
-  //   isOwner &&
-  //   asset.type === AssetTypeEnum.Image &&
-  //   !(
-  //     asset.exifInfo?.projectionType === ProjectionType.EQUIRECTANGULAR ||
-  //     (asset.originalPath && asset.originalPath.toLowerCase().endsWith('.insp'))
-  //   ) &&
-  //   !(asset.originalPath && asset.originalPath.toLowerCase().endsWith('.gif')) &&
-  //   !asset.livePhotoVideoId;
+  $: showEditorButton =
+    isOwner &&
+    asset.type === AssetTypeEnum.Image &&
+    !(
+      asset.exifInfo?.projectionType === ProjectionType.EQUIRECTANGULAR ||
+      (asset.originalPath && asset.originalPath.toLowerCase().endsWith('.insp'))
+    ) &&
+    !(asset.originalPath && asset.originalPath.toLowerCase().endsWith('.gif')) &&
+    !asset.livePhotoVideoId;
 </script>
 
 <div
@@ -113,7 +116,7 @@
     {#if isOwner}
       <FavoriteAction {asset} {onAction} />
     {/if}
-    <!-- {#if showEditorButton}
+    {#if showEditorButton}
       <CircleIconButton
         color="opaque"
         hideMobile={true}
@@ -121,7 +124,7 @@
         on:click={showEditorHandler}
         title={$t('editor')}
       />
-    {/if} -->
+    {/if}
 
     {#if isOwner}
       <DeleteAction {asset} {onAction} />
@@ -141,6 +144,10 @@
         {/if}
 
         {#if isOwner}
+          {#if !asset.isTrashed}
+            <RotateAction {asset} {onAction} to="left" />
+            <RotateAction {asset} {onAction} to="right" />
+          {/if}
           {#if stack}
             <UnstackAction {stack} {onAction} />
           {/if}

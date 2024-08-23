@@ -13,14 +13,24 @@ part of openapi.api;
 class UpdateAssetDto {
   /// Returns a new [UpdateAssetDto] instance.
   UpdateAssetDto({
+    this.crop,
     this.dateTimeOriginal,
     this.description,
     this.isArchived,
     this.isFavorite,
     this.latitude,
     this.longitude,
+    this.orientation,
     this.rating,
   });
+
+  ///
+  /// Please note: This property should have been non-nullable! Since the specification file
+  /// does not include a default value (using the "default:" property), however, the generated
+  /// source code must fall back to having a nullable type.
+  /// Consider adding a "default:" property in the specification file to hide this note.
+  ///
+  CropOptionsDto? crop;
 
   ///
   /// Please note: This property should have been non-nullable! Since the specification file
@@ -70,6 +80,14 @@ class UpdateAssetDto {
   ///
   num? longitude;
 
+  ///
+  /// Please note: This property should have been non-nullable! Since the specification file
+  /// does not include a default value (using the "default:" property), however, the generated
+  /// source code must fall back to having a nullable type.
+  /// Consider adding a "default:" property in the specification file to hide this note.
+  ///
+  ExifOrientation? orientation;
+
   /// Minimum value: 0
   /// Maximum value: 5
   ///
@@ -82,30 +100,39 @@ class UpdateAssetDto {
 
   @override
   bool operator ==(Object other) => identical(this, other) || other is UpdateAssetDto &&
+    other.crop == crop &&
     other.dateTimeOriginal == dateTimeOriginal &&
     other.description == description &&
     other.isArchived == isArchived &&
     other.isFavorite == isFavorite &&
     other.latitude == latitude &&
     other.longitude == longitude &&
+    other.orientation == orientation &&
     other.rating == rating;
 
   @override
   int get hashCode =>
     // ignore: unnecessary_parenthesis
+    (crop == null ? 0 : crop!.hashCode) +
     (dateTimeOriginal == null ? 0 : dateTimeOriginal!.hashCode) +
     (description == null ? 0 : description!.hashCode) +
     (isArchived == null ? 0 : isArchived!.hashCode) +
     (isFavorite == null ? 0 : isFavorite!.hashCode) +
     (latitude == null ? 0 : latitude!.hashCode) +
     (longitude == null ? 0 : longitude!.hashCode) +
+    (orientation == null ? 0 : orientation!.hashCode) +
     (rating == null ? 0 : rating!.hashCode);
 
   @override
-  String toString() => 'UpdateAssetDto[dateTimeOriginal=$dateTimeOriginal, description=$description, isArchived=$isArchived, isFavorite=$isFavorite, latitude=$latitude, longitude=$longitude, rating=$rating]';
+  String toString() => 'UpdateAssetDto[crop=$crop, dateTimeOriginal=$dateTimeOriginal, description=$description, isArchived=$isArchived, isFavorite=$isFavorite, latitude=$latitude, longitude=$longitude, orientation=$orientation, rating=$rating]';
 
   Map<String, dynamic> toJson() {
     final json = <String, dynamic>{};
+    if (this.crop != null) {
+      json[r'crop'] = this.crop;
+    } else {
+    //  json[r'crop'] = null;
+    }
     if (this.dateTimeOriginal != null) {
       json[r'dateTimeOriginal'] = this.dateTimeOriginal;
     } else {
@@ -136,6 +163,11 @@ class UpdateAssetDto {
     } else {
     //  json[r'longitude'] = null;
     }
+    if (this.orientation != null) {
+      json[r'orientation'] = this.orientation;
+    } else {
+    //  json[r'orientation'] = null;
+    }
     if (this.rating != null) {
       json[r'rating'] = this.rating;
     } else {
@@ -152,12 +184,14 @@ class UpdateAssetDto {
       final json = value.cast<String, dynamic>();
 
       return UpdateAssetDto(
+        crop: CropOptionsDto.fromJson(json[r'crop']),
         dateTimeOriginal: mapValueOfType<String>(json, r'dateTimeOriginal'),
         description: mapValueOfType<String>(json, r'description'),
         isArchived: mapValueOfType<bool>(json, r'isArchived'),
         isFavorite: mapValueOfType<bool>(json, r'isFavorite'),
         latitude: num.parse('${json[r'latitude']}'),
         longitude: num.parse('${json[r'longitude']}'),
+        orientation: ExifOrientation.fromJson(json[r'orientation']),
         rating: num.parse('${json[r'rating']}'),
       );
     }
