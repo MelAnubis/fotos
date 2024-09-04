@@ -100,10 +100,7 @@ export type AssetWithoutRelations = Omit<
   | 'tags'
 >;
 
-type AssetUpdateWithoutRelations = Pick<AssetWithoutRelations, 'id'> & Partial<AssetWithoutRelations>;
-type AssetUpdateWithLivePhotoRelation = Pick<AssetWithoutRelations, 'id'> & Pick<AssetEntity, 'livePhotoVideo'>;
-
-export type AssetUpdateOptions = AssetUpdateWithoutRelations | AssetUpdateWithLivePhotoRelation;
+export type AssetUpdateOptions = Partial<AssetWithoutRelations & Pick<AssetEntity, 'livePhotoVideo'>>;
 
 export type AssetUpdateAllOptions = Omit<Partial<AssetWithoutRelations>, 'id'>;
 
@@ -149,6 +146,7 @@ export const IAssetRepository = 'IAssetRepository';
 export interface IAssetRepository {
   getAssetsByOriginalPath(userId: string, partialPath: string): Promise<AssetEntity[]>;
   getUniqueOriginalPaths(userId: string): Promise<string[]>;
+  removeEmptyFolders(): Promise<void>;
   create(asset: AssetCreate): Promise<AssetEntity>;
   getByIds(
     ids: string[],
