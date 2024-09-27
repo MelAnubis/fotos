@@ -13,7 +13,7 @@ import { AssetFaceEntity } from 'src/entities/asset-face.entity';
 import { AssetEntity } from 'src/entities/asset.entity';
 import { ExifEntity } from 'src/entities/exif.entity';
 import { PersonEntity } from 'src/entities/person.entity';
-import { AssetType, SourceType } from 'src/enum';
+import { AssetType, Orientation, SourceType } from 'src/enum';
 import { IAlbumRepository } from 'src/interfaces/album.interface';
 import { IAssetRepository, WithoutProperty } from 'src/interfaces/asset.interface';
 import { ICryptoRepository } from 'src/interfaces/crypto.interface';
@@ -54,17 +54,6 @@ const EXIF_DATE_TAGS: Array<keyof Tags> = [
   'MediaCreateDate',
   'DateTimeCreated',
 ];
-
-export enum Orientation {
-  Horizontal = 1,
-  MirrorHorizontal = 2,
-  Rotate180 = 3,
-  MirrorVertical = 4,
-  MirrorHorizontalRotate270CW = 5,
-  Rotate90CW = 6,
-  MirrorHorizontalRotate90CW = 7,
-  Rotate270CW = 8,
-}
 
 const validate = <T>(value: T): NonNullable<T> | null => {
   // handle lists of numbers
@@ -256,7 +245,7 @@ export class MetadataService {
       fileSizeInByte: stats.size,
       exifImageHeight: validate(exifTags.ImageHeight),
       exifImageWidth: validate(exifTags.ImageWidth),
-      orientation: validate(exifTags.Orientation)?.toString() ?? null,
+      orientation: this.getOrientation(asset.id, exifTags.Orientation),
       projectionType: exifTags.ProjectionType ? String(exifTags.ProjectionType).toUpperCase() : null,
       bitsPerSample: this.getBitsPerSample(exifTags),
       colorspace: exifTags.ColorSpace ?? null,
@@ -682,9 +671,32 @@ export class MetadataService {
     return tags.BurstID ?? tags.BurstUUID ?? tags.CameraBurstID ?? tags.MediaUniqueID ?? null;
   }
 
+  private getOrientation(id: string, orientation: ImmichTags['Orientation']) {
+    if (!orientation) {
+      return;
+    }
+
+    switch (orientation) {
+      case Orientation.Rotate0:
+      case Orientation.Rotate0Mirrored:
+      case Orientation.Rotate90:
+      case Orientation.Rotate90Mirrored:
+      case Orientation.Rotate180:
+      case Orientation.Rotate180Mirrored:
+      case Orientation.Rotate270:
+      case Orientation.Rotate270Mirrored: {
+        return orientation;
+      }
+    }
+
+    this.logger.warn(`Asset ${id} has unknown orientation: "${orientation}", setting to null`);
+
+    return null;
+  }
+
   private getBitsPerSample(tags: ImmichTags): number | null {
     const bitDepthTags = [
-      tags.BitsPerSample,
+      tags.Rotation,
       tags.ComponentBitDepth,
       tags.ImagePixelDepth,
       tags.BitDepth,
@@ -708,15 +720,15 @@ export class MetadataService {
     if (videoStreams[0]) {
       switch (videoStreams[0].rotation) {
         case -90: {
-          tags.Orientation = Orientation.Rotate90CW;
+          tags.Orientation = Orientation.Rotate270;
           break;
         }
         case 0: {
-          tags.Orientation = Orientation.Horizontal;
+          tags.Orientation = Orientation.Rotate0;
           break;
         }
         case 90: {
-          tags.Orientation = Orientation.Rotate270CW;
+          tags.Orientation = Orientation.Rotate90;
           break;
         }
         case 180: {
