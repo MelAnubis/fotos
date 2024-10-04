@@ -46,6 +46,11 @@ export interface Face {
   score: number;
 }
 
+export enum LoadTextModelActions {
+  LOAD,
+  UNLOAD,
+}
+
 export type FacialRecognitionResponse = { [ModelTask.FACIAL_RECOGNITION]: Face[] } & VisualResponse;
 export type DetectedFaces = { faces: Face[] } & VisualResponse;
 export type MachineLearningRequest = ClipVisualRequest | ClipTextualRequest | FacialRecognitionRequest;
@@ -54,4 +59,5 @@ export interface IMachineLearningRepository {
   encodeImage(url: string, imagePath: string, config: ModelOptions): Promise<number[]>;
   encodeText(url: string, text: string, config: ModelOptions): Promise<number[]>;
   detectFaces(url: string, imagePath: string, config: FaceDetectionOptions): Promise<DetectedFaces>;
+  prepareTextModel(url: string, config: ModelOptions, action: LoadTextModelActions): Promise<void>;
 }

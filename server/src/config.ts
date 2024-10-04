@@ -59,6 +59,9 @@ export interface SystemConfig {
     clip: {
       enabled: boolean;
       modelName: string;
+      loadTextualModelOnConnection: {
+        enabled: boolean;
+      };
     };
     duplicateDetection: {
       enabled: boolean;
@@ -206,6 +209,9 @@ export const defaults = Object.freeze<SystemConfig>({
     clip: {
       enabled: true,
       modelName: 'ViT-B-32__openai',
+      loadTextualModelOnConnection: {
+        enabled: false,
+      },
     },
     duplicateDetection: {
       enabled: true,

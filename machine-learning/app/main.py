@@ -11,7 +11,7 @@ from typing import Any, AsyncGenerator, Callable, Iterator
 from zipfile import BadZipFile
 
 import orjson
-from fastapi import Depends, FastAPI, File, Form, HTTPException
+from fastapi import Depends, FastAPI, File, Form, HTTPException, Response
 from fastapi.responses import ORJSONResponse
 from onnxruntime.capi.onnxruntime_pybind11_state import InvalidProtobuf, NoSuchFile
 from PIL.Image import Image
@@ -124,6 +124,23 @@ def get_entries(entries: str = Form()) -> InferenceEntries:
         raise HTTPException(422, "Invalid request format.")
 
 
+def get_entry(entries: str = Form()) -> InferenceEntry:
+    try:
+        request: PipelineRequest = orjson.loads(entries)
+        for task, types in request.items():
+            for type, entry in types.items():
+                parsed: InferenceEntry = {
+                    "name": entry["modelName"],
+                    "task": task,
+                    "type": type,
+                    "options": entry.get("options", {}),
+                }
+        return parsed
+    except (orjson.JSONDecodeError, ValidationError, KeyError, AttributeError) as e:
+        log.error(f"Invalid request format: {e}")
+        raise HTTPException(422, "Invalid request format.")
+
+
 app = FastAPI(lifespan=lifespan)
 
 
@@ -135,6 +152,20 @@ async def root() -> dict[str, str]:
 @app.get("/ping", response_model=TextResponse)
 def ping() -> str:
     return "pong"
+
+
+@app.post("/load", response_model=TextResponse)
+async def load_model(entry: InferenceEntry = Depends(get_entry)) -> None:
+    model = await model_cache.get(entry["name"], entry["type"], entry["task"], ttl=settings.model_ttl)
+    model = await load(model)
+    return Response(status_code=200)
+
+
+@app.post("/unload", response_model=TextResponse)
+async def unload_model(entry: InferenceEntry = Depends(get_entry)) -> None:
+    await model_cache.unload(entry["name"], entry["type"], entry["task"])
+    print("unload")
+    return Response(status_code=200)
 
 
 @app.post("/predict", dependencies=[Depends(update_state)])

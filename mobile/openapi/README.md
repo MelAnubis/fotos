@@ -116,7 +116,6 @@ Class | Method | HTTP request | Description
 *AuthenticationApi* | [**signUpAdmin**](doc//AuthenticationApi.md#signupadmin) | **POST** /auth/admin-sign-up | 
 *AuthenticationApi* | [**validateAccessToken**](doc//AuthenticationApi.md#validateaccesstoken) | **POST** /auth/validateToken | 
 *DeprecatedApi* | [**getPersonAssets**](doc//DeprecatedApi.md#getpersonassets) | **GET** /people/{id}/assets | 
-*DeprecatedApi* | [**getRandom**](doc//DeprecatedApi.md#getrandom) | **GET** /assets/random | 
 *DownloadApi* | [**downloadArchive**](doc//DownloadApi.md#downloadarchive) | **POST** /download/archive | 
 *DownloadApi* | [**getDownloadInfo**](doc//DownloadApi.md#getdownloadinfo) | **POST** /download/info | 
 *DuplicatesApi* | [**getAssetDuplicates**](doc//DuplicatesApi.md#getassetduplicates) | **GET** /duplicates | 
@@ -125,7 +124,6 @@ Class | Method | HTTP request | Description
 *FileReportsApi* | [**fixAuditFiles**](doc//FileReportsApi.md#fixauditfiles) | **POST** /reports/fix | 
 *FileReportsApi* | [**getAuditFiles**](doc//FileReportsApi.md#getauditfiles) | **GET** /reports | 
 *FileReportsApi* | [**getFileChecksums**](doc//FileReportsApi.md#getfilechecksums) | **POST** /reports/checksum | 
-*JobsApi* | [**createJob**](doc//JobsApi.md#createjob) | **POST** /jobs | 
 *JobsApi* | [**getAllJobsStatus**](doc//JobsApi.md#getalljobsstatus) | **GET** /jobs | 
 *JobsApi* | [**sendJobCommand**](doc//JobsApi.md#sendjobcommand) | **PUT** /jobs/{id} | 
 *LibrariesApi* | [**createLibrary**](doc//LibrariesApi.md#createlibrary) | **POST** /libraries | 
@@ -137,6 +135,7 @@ Class | Method | HTTP request | Description
 *LibrariesApi* | [**updateLibrary**](doc//LibrariesApi.md#updatelibrary) | **PUT** /libraries/{id} | 
 *LibrariesApi* | [**validate**](doc//LibrariesApi.md#validate) | **POST** /libraries/{id}/validate | 
 *MapApi* | [**getMapMarkers**](doc//MapApi.md#getmapmarkers) | **GET** /map/markers | 
+*MapApi* | [**getMapStyle**](doc//MapApi.md#getmapstyle) | **GET** /map/style.json | 
 *MapApi* | [**reverseGeocode**](doc//MapApi.md#reversegeocode) | **GET** /map/reverse-geocode | 
 *MemoriesApi* | [**addMemoryAssets**](doc//MemoriesApi.md#addmemoryassets) | **PUT** /memories/{id}/assets | 
 *MemoriesApi* | [**createMemory**](doc//MemoriesApi.md#creatememory) | **POST** /memories | 
@@ -171,7 +170,6 @@ Class | Method | HTTP request | Description
 *SearchApi* | [**searchMetadata**](doc//SearchApi.md#searchmetadata) | **POST** /search/metadata | 
 *SearchApi* | [**searchPerson**](doc//SearchApi.md#searchperson) | **GET** /search/person | 
 *SearchApi* | [**searchPlaces**](doc//SearchApi.md#searchplaces) | **GET** /search/places | 
-*SearchApi* | [**searchRandom**](doc//SearchApi.md#searchrandom) | **POST** /search/random | 
 *SearchApi* | [**searchSmart**](doc//SearchApi.md#searchsmart) | **POST** /search/smart | 
 *ServerApi* | [**deleteServerLicense**](doc//ServerApi.md#deleteserverlicense) | **DELETE** /server/license | 
 *ServerApi* | [**getAboutInfo**](doc//ServerApi.md#getaboutinfo) | **GET** /server/about | 
@@ -332,7 +330,6 @@ Class | Method | HTTP request | Description
  - [JobCommand](doc//JobCommand.md)
  - [JobCommandDto](doc//JobCommandDto.md)
  - [JobCountsDto](doc//JobCountsDto.md)
- - [JobCreateDto](doc//JobCreateDto.md)
  - [JobName](doc//JobName.md)
  - [JobSettingsDto](doc//JobSettingsDto.md)
  - [JobStatusDto](doc//JobStatusDto.md)
@@ -340,13 +337,14 @@ Class | Method | HTTP request | Description
  - [LibraryStatsResponseDto](doc//LibraryStatsResponseDto.md)
  - [LicenseKeyDto](doc//LicenseKeyDto.md)
  - [LicenseResponseDto](doc//LicenseResponseDto.md)
+ - [LoadTextualModelOnConnection](doc//LoadTextualModelOnConnection.md)
  - [LogLevel](doc//LogLevel.md)
  - [LoginCredentialDto](doc//LoginCredentialDto.md)
  - [LoginResponseDto](doc//LoginResponseDto.md)
  - [LogoutResponseDto](doc//LogoutResponseDto.md)
- - [ManualJobName](doc//ManualJobName.md)
  - [MapMarkerResponseDto](doc//MapMarkerResponseDto.md)
  - [MapReverseGeocodeResponseDto](doc//MapReverseGeocodeResponseDto.md)
+ - [MapTheme](doc//MapTheme.md)
  - [MemoriesResponse](doc//MemoriesResponse.md)
  - [MemoriesUpdate](doc//MemoriesUpdate.md)
  - [MemoryCreateDto](doc//MemoryCreateDto.md)
@@ -379,7 +377,6 @@ Class | Method | HTTP request | Description
  - [PurchaseResponse](doc//PurchaseResponse.md)
  - [PurchaseUpdate](doc//PurchaseUpdate.md)
  - [QueueStatusDto](doc//QueueStatusDto.md)
- - [RandomSearchDto](doc//RandomSearchDto.md)
  - [RatingsResponse](doc//RatingsResponse.md)
  - [RatingsUpdate](doc//RatingsUpdate.md)
  - [ReactionLevel](doc//ReactionLevel.md)
@@ -455,7 +452,6 @@ Class | Method | HTTP request | Description
  - [ToneMapping](doc//ToneMapping.md)
  - [TranscodeHWAccel](doc//TranscodeHWAccel.md)
  - [TranscodePolicy](doc//TranscodePolicy.md)
- - [TrashResponseDto](doc//TrashResponseDto.md)
  - [UpdateAlbumDto](doc//UpdateAlbumDto.md)
  - [UpdateAlbumUserDto](doc//UpdateAlbumUserDto.md)
  - [UpdateAssetDto](doc//UpdateAssetDto.md)

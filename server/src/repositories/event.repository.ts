@@ -8,6 +8,7 @@ import {
   WebSocketServer,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
+import { SystemConfigCore } from 'src/cores/system-config.core';
 import {
   ArgsOf,
   ClientEventMap,
@@ -18,6 +19,8 @@ import {
   ServerEvents,
 } from 'src/interfaces/event.interface';
 import { ILoggerRepository } from 'src/interfaces/logger.interface';
+import { IMachineLearningRepository, LoadTextModelActions } from 'src/interfaces/machine-learning.interface';
+import { ISystemMetadataRepository } from 'src/interfaces/system-metadata.interface';
 import { AuthService } from 'src/services/auth.service';
 import { Instrumentation } from 'src/utils/instrumentation';
 import { handlePromiseError } from 'src/utils/misc';
@@ -33,6 +36,7 @@ type EmitHandlers = Partial<{ [T in EmitEvent]: Array<EventItem<T>> }>;
 @Injectable()
 export class EventRepository implements OnGatewayConnection, OnGatewayDisconnect, OnGatewayInit, IEventRepository {
   private emitHandlers: EmitHandlers = {};
+  private configCore: SystemConfigCore;
 
   @WebSocketServer()
   private server?: Server;
@@ -40,8 +44,11 @@ export class EventRepository implements OnGatewayConnection, OnGatewayDisconnect
   constructor(
     private moduleRef: ModuleRef,
     @Inject(ILoggerRepository) private logger: ILoggerRepository,
+    @Inject(IMachineLearningRepository) private machineLearningRepository: IMachineLearningRepository,
+    @Inject(ISystemMetadataRepository) systemMetadataRepository: ISystemMetadataRepository,
   ) {
     this.logger.setContext(EventRepository.name);
+    this.configCore = SystemConfigCore.create(systemMetadataRepository, this.logger);
   }
 
   afterInit(server: Server) {
@@ -63,6 +70,21 @@ export class EventRepository implements OnGatewayConnection, OnGatewayDisconnect
         queryParams: {},
         metadata: { adminRoute: false, sharedLinkRoute: false, uri: '/api/socket.io' },
       });
+      if ('background' in client.handshake.query && client.handshake.query.background === 'false') {
+        const { machineLearning } = await this.configCore.getConfig({ withCache: true });
+        if (machineLearning.clip.loadTextualModelOnConnection.enabled) {
+          try {
+            console.log(this.server);
+            this.machineLearningRepository.prepareTextModel(
+              machineLearning.url,
+              machineLearning.clip,
+              LoadTextModelActions.LOAD,
+            );
+          } catch (error) {
+            this.logger.warn(error);
+          }
+        }
+      }
       await client.join(auth.user.id);
       if (auth.session) {
         await client.join(auth.session.id);
@@ -78,6 +100,21 @@ export class EventRepository implements OnGatewayConnection, OnGatewayDisconnect
   async handleDisconnect(client: Socket) {
     this.logger.log(`Websocket Disconnect: ${client.id}`);
     await client.leave(client.nsp.name);
+    if ('background' in client.handshake.query && client.handshake.query.background === 'false') {
+      const { machineLearning } = await this.configCore.getConfig({ withCache: true });
+      if (machineLearning.clip.loadTextualModelOnConnection.enabled && this.server?.engine.clientsCount == 0) {
+        try {
+          this.machineLearningRepository.prepareTextModel(
+            machineLearning.url,
+            machineLearning.clip,
+            LoadTextModelActions.UNLOAD,
+          );
+          this.logger.debug('sent request to unload text model');
+        } catch (error) {
+          this.logger.warn(error);
+        }
+      }
+    }
   }
 
   on<T extends EmitEvent>(item: EventItem<T>): void {
