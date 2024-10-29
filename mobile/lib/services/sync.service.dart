@@ -1,6 +1,8 @@
 import 'dart:async';
 
+import 'package:async/async.dart';
 import 'package:collection/collection.dart';
+import 'package:flutter/widgets.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:immich_mobile/entities/album.entity.dart';
 import 'package:immich_mobile/entities/asset.entity.dart';
@@ -12,6 +14,8 @@ import 'package:immich_mobile/interfaces/album_media.interface.dart';
 import 'package:immich_mobile/interfaces/asset.interface.dart';
 import 'package:immich_mobile/interfaces/etag.interface.dart';
 import 'package:immich_mobile/interfaces/exif_info.interface.dart';
+import 'package:immich_mobile/interfaces/sync.interface.dart';
+import 'package:immich_mobile/interfaces/sync_api.interface.dart';
 import 'package:immich_mobile/interfaces/user.interface.dart';
 import 'package:immich_mobile/repositories/album.repository.dart';
 import 'package:immich_mobile/repositories/album_api.repository.dart';
@@ -19,6 +23,8 @@ import 'package:immich_mobile/repositories/album_media.repository.dart';
 import 'package:immich_mobile/repositories/asset.repository.dart';
 import 'package:immich_mobile/repositories/etag.repository.dart';
 import 'package:immich_mobile/repositories/exif_info.repository.dart';
+import 'package:immich_mobile/repositories/sync.repository.dart';
+import 'package:immich_mobile/repositories/sync_api.repository.dart';
 import 'package:immich_mobile/repositories/user.repository.dart';
 import 'package:immich_mobile/services/entity.service.dart';
 import 'package:immich_mobile/services/hash.service.dart';
@@ -26,7 +32,9 @@ import 'package:immich_mobile/utils/async_mutex.dart';
 import 'package:immich_mobile/extensions/collection_extensions.dart';
 import 'package:immich_mobile/utils/datetime_comparison.dart';
 import 'package:immich_mobile/utils/diff.dart';
+import 'package:immich_mobile/utils/hooks/timer_hook.dart';
 import 'package:logging/logging.dart';
+import 'package:openapi/api.dart';
 
 final syncServiceProvider = Provider(
   (ref) => SyncService(
@@ -39,6 +47,8 @@ final syncServiceProvider = Provider(
     ref.watch(exifInfoRepositoryProvider),
     ref.watch(userRepositoryProvider),
     ref.watch(etagRepositoryProvider),
+    ref.watch(syncRepositoryProvider),
+    ref.watch(syncApiRepositoryProvider),
   ),
 );
 
@@ -52,6 +62,8 @@ class SyncService {
   final IExifInfoRepository _exifInfoRepository;
   final IUserRepository _userRepository;
   final IETagRepository _eTagRepository;
+  final ISyncRepository _syncRepository;
+  final ISyncApiRepository _syncApiRepository;
   final AsyncMutex _lock = AsyncMutex();
   final Logger _log = Logger('SyncService');
 
@@ -65,7 +77,92 @@ class SyncService {
     this._exifInfoRepository,
     this._userRepository,
     this._eTagRepository,
+    this._syncRepository,
+    this._syncApiRepository,
   );
+
+  Future<void> syncAssets() async {
+    try {
+      final batchSize = 1000;
+      final List<Asset> toUpsert = [];
+      final List<String> toDelete = [];
+      String ackTimestamp = "";
+      String ackId = "";
+
+      final eventStream =
+          _syncApiRepository.getChanges(SyncStreamDtoTypesEnum.asset);
+
+      await for (final event in eventStream) {
+        for (final e in event) {
+          ackTimestamp = e.timestamp;
+          ackId = e.id;
+
+          if (e.action == SyncAction.upsert) {
+            toUpsert.add(e.data as Asset);
+          }
+
+          if (e.action == SyncAction.delete) {
+            toDelete.add(e.data as String);
+          }
+
+          if (toUpsert.length >= batchSize) {
+            await _upsertAssets(toUpsert);
+            toUpsert.clear();
+            await _confirmAssetsChanges(ackId, ackTimestamp);
+          }
+
+          if (toDelete.length >= batchSize) {
+            await _deleteAssets(toDelete);
+            toDelete.clear();
+            await _confirmAssetsChanges(ackId, ackTimestamp);
+          }
+        }
+
+        // Process any remaining events
+        if (toUpsert.isNotEmpty) {
+          await _upsertAssets(toUpsert);
+          toUpsert.clear();
+          await _confirmAssetsChanges(ackId, ackTimestamp);
+        }
+
+        if (toDelete.isNotEmpty) {
+          await _deleteAssets(toDelete);
+          toDelete.clear();
+          await _confirmAssetsChanges(ackId, ackTimestamp);
+        }
+      }
+    } catch (error, stackTrace) {
+      _log.severe("Error syncing assets", error, stackTrace);
+    }
+  }
+
+  Future<void> _confirmAssetsChanges(String id, String timestamp) async {
+    await _syncApiRepository.confirmChanges(
+      SyncStreamDtoTypesEnum.asset,
+      id,
+      timestamp,
+    );
+  }
+
+  Future<void> _upsertAssets(
+    List<Asset> toUpsert,
+  ) async {
+    final (updateAssets, newAssets) = await _getAssetsFromDb(toUpsert);
+
+    if (updateAssets.isNotEmpty) {
+      await _assetRepository.updateAll(updateAssets);
+    }
+
+    if (newAssets.isNotEmpty) {
+      await upsertAssetsWithExif(newAssets);
+    }
+  }
+
+  Future<void> _deleteAssets(
+    List<String> toDelete,
+  ) async {
+    await _assetRepository.deleteAllByRemoteId(toDelete);
+  }
 
   // public methods:
 
@@ -746,6 +843,35 @@ class SyncService {
     return (existing, toUpsert);
   }
 
+  /// !TODO: to replace _linkWithExistingFromDb above
+  Future<(List<Asset> updateAssets, List<Asset> newAssets)> _getAssetsFromDb(
+    List<Asset> assets,
+  ) async {
+    if (assets.isEmpty) return ([].cast<Asset>(), [].cast<Asset>());
+
+    final List<Asset?> inDb = await _assetRepository.getAllByOwnerIdChecksum(
+      assets.map((a) => a.ownerId).toInt64List(),
+      assets.map((a) => a.checksum).toList(growable: false),
+    );
+    assert(inDb.length == assets.length);
+
+    final List<Asset> updateAssets = [];
+    final List<Asset> newAssets = [];
+
+    for (int i = 0; i < assets.length; i++) {
+      final Asset? b = inDb[i];
+      if (b == null) {
+        newAssets.add(assets[i]);
+        continue;
+      } else {
+        updateAssets.add(b);
+      }
+    }
+
+    assert(updateAssets.length + newAssets.length == assets.length);
+    return (updateAssets, newAssets);
+  }
+
   /// Inserts or updates the assets in the database with their ExifInfo (if any)
   Future<void> upsertAssetsWithExif(List<Asset> assets) async {
     if (assets.isEmpty) return;
@@ -778,7 +904,7 @@ class SyncService {
           }
         } else if (a.id != b.id) {
           _log.warning(
-            "Trying to insert another asset with the same checksum+owner. In DB:\n$b\nTo insert:\n$a",
+            "Trying to insert another asset with the same checksum+owner",
           );
         }
       }
