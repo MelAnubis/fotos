@@ -7,7 +7,7 @@
   import Icon from '$lib/components/elements/icon.svelte';
   import ChangeDate from '$lib/components/shared-components/change-date.svelte';
   import { AppRoute, QueryParameter, timeToLoadTheMap } from '$lib/constants';
-  import { boundingBoxesArray } from '$lib/stores/people.store';
+  import { boundingBoxesArray, createBoundingBoxType, getBorderColor } from '$lib/stores/people.store';
   import { locale } from '$lib/stores/preferences.store';
   import { featureFlags } from '$lib/stores/server-config.store';
   import { preferences, user } from '$lib/stores/user.store';
@@ -34,9 +34,12 @@
     mdiImageOutline,
     mdiInformationOutline,
     mdiPencil,
+    mdiFaceRecognition,
+    mdiFaceMan,
   } from '@mdi/js';
   import { DateTime } from 'luxon';
   import { t } from 'svelte-i18n';
+  import { onDestroy } from 'svelte';
   import { slide } from 'svelte/transition';
   import ImageThumbnail from '../assets/thumbnail/image-thumbnail.svelte';
   import CircleIconButton from '../elements/buttons/circle-icon-button.svelte';
@@ -97,7 +100,22 @@
   })();
 
   $: people = asset.people || [];
-  $: showingHiddenPeople = false;
+
+  $: faces = showFaceBoundingBox
+    ? people
+        .filter((person) => showingHiddenPeople || !person.isHidden)
+        .flatMap((person) =>
+          person.faces.map((face) => createBoundingBoxType(face, person.id, showingHiddenPeople && person.isHidden)),
+        )
+        .concat(showingHiddenPeople ? unassignedFaces.map((face) => createBoundingBoxType(face, face.id, true)) : [])
+    : [];
+
+  $: {
+    $boundingBoxesArray = faces || [];
+  }
+
+  let showingHiddenPeople = false;
+  let showFaceBoundingBox = false;
 
   $: unassignedFaces = asset.unassignedFaces || [];
 
@@ -106,6 +124,10 @@
     timeZone && asset.exifInfo?.dateTimeOriginal
       ? fromDateTimeOriginal(asset.exifInfo.dateTimeOriginal, timeZone)
       : fromLocalDateTime(asset.localDateTime);
+
+  onDestroy(() => {
+    $boundingBoxesArray = [];
+  });
 
   const getMegapixel = (width: number, height: number): number | undefined => {
     const megapixel = Math.round((height * width) / 1_000_000);
@@ -123,6 +145,7 @@
       unassignedFaces = data?.unassignedFaces || [];
     });
     showEditFaces = false;
+    $boundingBoxesArray = faces || [];
   };
 
   const toggleAssetPath = () => (showAssetPath = !showAssetPath);
@@ -184,7 +207,7 @@
               size="24"
             />
           {/if}
-          {#if people.some((person) => person.isHidden)}
+          {#if showFaceBoundingBox || people.some((person) => person.isHidden)}
             <CircleIconButton
               title={$t('show_hidden_people')}
               icon={showingHiddenPeople ? mdiEyeOff : mdiEye}
@@ -193,6 +216,13 @@
               on:click={() => (showingHiddenPeople = !showingHiddenPeople)}
             />
           {/if}
+          <CircleIconButton
+            title={$t('mark_all_faces')}
+            icon={showFaceBoundingBox ? mdiFaceMan : mdiFaceRecognition}
+            padding="1"
+            buttonSize="32"
+            on:click={() => (showFaceBoundingBox = !showFaceBoundingBox)}
+          />
           <CircleIconButton
             title={$t('edit_people')}
             icon={mdiPencil}
@@ -212,12 +242,17 @@
               href="{AppRoute.PEOPLE}/{person.id}?{QueryParameter.PREVIOUS_ROUTE}={currentAlbum?.id
                 ? `${AppRoute.ALBUMS}/${currentAlbum?.id}`
                 : AppRoute.PHOTOS}"
-              on:focus={() => ($boundingBoxesArray = people[index].faces)}
+              on:focus={() =>
+                ($boundingBoxesArray = people[index].faces.map((face) => createBoundingBoxType(face, person.id, true)))}
               on:blur={() => ($boundingBoxesArray = [])}
-              on:mouseover={() => ($boundingBoxesArray = people[index].faces)}
-              on:mouseleave={() => ($boundingBoxesArray = [])}
+              on:mouseover={() =>
+                ($boundingBoxesArray = people[index].faces.map((face) => createBoundingBoxType(face, person.id, true)))}
+              on:mouseleave={() => ($boundingBoxesArray = faces)}
             >
-              <div class="relative">
+              <div
+                class="relative border-solid border-[3px] rounded-lg border-transparent"
+                style:border-color={showFaceBoundingBox ? `${getBorderColor(person.id)}` : ''}
+              >
                 <ImageThumbnail
                   curve
                   shadow

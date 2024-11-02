@@ -1,7 +1,7 @@
 <script lang="ts">
   import LoadingSpinner from '$lib/components/shared-components/loading-spinner.svelte';
   import { timeBeforeShowLoadingSpinner } from '$lib/constants';
-  import { boundingBoxesArray } from '$lib/stores/people.store';
+  import { boundingBoxesArray, createBoundingBoxType } from '$lib/stores/people.store';
   import { websocketEvents } from '$lib/stores/websocket';
   import { getPeopleThumbnailUrl, handlePromiseError } from '$lib/utils';
   import { handleError } from '$lib/utils/handle-error';
@@ -207,8 +207,9 @@
               role="button"
               tabindex={index}
               class="absolute left-0 top-0 h-[90px] w-[90px] cursor-default"
-              on:focus={() => ($boundingBoxesArray = [peopleWithFaces[index]])}
-              on:mouseover={() => ($boundingBoxesArray = [peopleWithFaces[index]])}
+              on:focus={() => ($boundingBoxesArray = [createBoundingBoxType(peopleWithFaces[index], face.id, true)])}
+              on:mouseover={() =>
+                ($boundingBoxesArray = [createBoundingBoxType(peopleWithFaces[index], face.id, true)])}
               on:mouseleave={() => ($boundingBoxesArray = [])}
             >
               <div class="relative">
