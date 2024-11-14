@@ -15,6 +15,7 @@ import {
   PersonResponseDto,
   PersonSearchDto,
   PersonStatisticsResponseDto,
+  PersonStatsDto,
   PersonUpdateDto,
   mapFaces,
   mapPerson,
@@ -151,9 +152,9 @@ export class PersonService extends BaseService {
     return this.findOrFail(id).then(mapPerson);
   }
 
-  async getStatistics(auth: AuthDto, id: string): Promise<PersonStatisticsResponseDto> {
+  async getStatistics(auth: AuthDto, id: string, dto: PersonStatsDto): Promise<PersonStatisticsResponseDto> {
     await this.requireAccess({ auth, permission: Permission.PERSON_READ, ids: [id] });
-    return this.personRepository.getStatistics(id);
+    return this.personRepository.getStatistics(id, dto);
   }
 
   async getThumbnail(auth: AuthDto, id: string): Promise<ImmichFileResponse> {
@@ -182,7 +183,7 @@ export class PersonService extends BaseService {
   async update(auth: AuthDto, id: string, dto: PersonUpdateDto): Promise<PersonResponseDto> {
     await this.requireAccess({ auth, permission: Permission.PERSON_UPDATE, ids: [id] });
 
-    const { name, birthDate, isHidden, featureFaceAssetId: assetId } = dto;
+    const { name, birthDate, isHidden, featureFaceAssetId: assetId, withArchived } = dto;
     // TODO: set by faceId directly
     let faceId: string | undefined = undefined;
     if (assetId) {
@@ -195,7 +196,14 @@ export class PersonService extends BaseService {
       faceId = face.id;
     }
 
-    const person = await this.personRepository.update({ id, faceAssetId: faceId, name, birthDate, isHidden });
+    const person = await this.personRepository.update({
+      id,
+      faceAssetId: faceId,
+      name,
+      birthDate,
+      isHidden,
+      withArchived,
+    });
 
     if (assetId) {
       await this.jobRepository.queue({ name: JobName.GENERATE_PERSON_THUMBNAIL, data: { id } });
