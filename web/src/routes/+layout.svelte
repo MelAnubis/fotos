@@ -10,9 +10,7 @@
   import VersionAnnouncementBox from '$lib/components/shared-components/version-announcement-box.svelte';
   import { Theme } from '$lib/constants';
   import { colorTheme, handleToggleTheme, type ThemeSetting } from '$lib/stores/preferences.store';
-
   import { serverConfig } from '$lib/stores/server-config.store';
-
   import { user } from '$lib/stores/user.store';
   import { closeWebsocketConnection, openWebsocketConnection } from '$lib/stores/websocket';
   import { copyToClipboard, setKey } from '$lib/utils';

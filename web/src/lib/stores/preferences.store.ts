@@ -1,5 +1,5 @@
 import { browser } from '$app/environment';
-import { Theme, defaultLang } from '$lib/constants';
+import { defaultLang, Theme } from '$lib/constants';
 import { getPreferredLocale } from '$lib/utils/i18n';
 import { persisted } from 'svelte-local-storage-store';
 import { get } from 'svelte/store';
@@ -24,7 +24,7 @@ const initTheme = (): ThemeSetting => {
 
 const initialTheme = initTheme();
 
-// The 'color-theme' key is also used by app.html to prevent FOUC on page load.
+// The 'color-theme' key is also used by app.ts to prevent FOUC on page load.
 export const colorTheme = persisted<ThemeSetting>('color-theme', initialTheme, {
   serializer: {
     parse: (text: string): ThemeSetting => {
