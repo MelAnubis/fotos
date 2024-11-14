@@ -525,7 +525,10 @@
 
     if (previousAsset) {
       const preloadAsset = await $assetStore.getPreviousAsset(previousAsset);
-      assetViewingStore.setAsset(previousAsset, preloadAsset ? [preloadAsset] : []);
+      if (preloadAsset) {
+        assetViewingStore.setPreloadAssets([preloadAsset]);
+      }
+      assetViewingStore.setAsset(previousAsset);
       await navigate({ targetRoute: 'current', assetId: previousAsset.id });
     }
 
@@ -537,7 +540,10 @@
 
     if (nextAsset) {
       const preloadAsset = await $assetStore.getNextAsset(nextAsset);
-      assetViewingStore.setAsset(nextAsset, preloadAsset ? [preloadAsset] : []);
+      if (preloadAsset) {
+        assetViewingStore.setPreloadAssets([preloadAsset]);
+      }
+      assetViewingStore.setAsset(nextAsset);
       await navigate({ targetRoute: 'current', assetId: nextAsset.id });
     }
 
