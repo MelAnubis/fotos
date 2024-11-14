@@ -19,6 +19,8 @@
   import LoadingSpinner from '../shared-components/loading-spinner.svelte';
   import { NotificationType, notificationController } from '../shared-components/notification/notification';
   import { handleError } from '$lib/utils/handle-error';
+  import CastPlayer from '$lib/utils/cast-player';
+  import { get } from 'svelte/store';
 
   export let asset: AssetResponseDto;
   export let preloadAssets: AssetResponseDto[] | undefined = undefined;
@@ -38,6 +40,10 @@
   let forceUseOriginal: boolean = false;
   let loader: HTMLImageElement;
 
+  let castPlayer = CastPlayer.getInstance();
+
+  let castState = get(castPlayer.castState);
+
   $: isWebCompatible = isWebCompatibleImage(asset);
   $: useOriginalByDefault = isWebCompatible && $alwaysLoadOriginalFile;
   $: useOriginalImage = useOriginalByDefault || forceUseOriginal;
@@ -47,6 +53,7 @@
 
   $: preload(useOriginalImage, preloadAssets);
   $: imageLoaderUrl = getAssetUrl(asset.id, useOriginalImage, asset.checksum);
+  $: void cast(imageLoaderUrl);
 
   photoZoomState.set({
     currentRotation: 0,
@@ -56,6 +63,25 @@
     currentPositionY: 0,
   });
   $zoomed = false;
+
+  onMount(() => {
+    castPlayer.castState.subscribe((value) => {
+      if (castState !== value) {
+        void cast(assetFileUrl);
+      }
+      castState = value;
+    });
+  });
+
+  const cast = async (url: string) => {
+    if (!url) {
+      return;
+    } else if (castState !== 'CONNECTED') {
+      return;
+    }
+    const fullUrl = new URL(url, window.location.href);
+    await castPlayer.loadMedia(fullUrl.href);
+  };
 
   onDestroy(() => {
     $boundingBoxesArray = [];
