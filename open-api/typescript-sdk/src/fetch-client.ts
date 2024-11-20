@@ -748,6 +748,11 @@ export type FileChecksumResponseDto = {
 export type FileReportFixDto = {
     items: FileReportItemDto[];
 };
+export type SearchAlbumNameResponseDto = {
+    albums: AlbumResponseDto[];
+    hasNextPage?: boolean;
+    total?: number;
+};
 export type SearchExploreItem = {
     data: AssetResponseDto;
     value: string;
@@ -823,6 +828,11 @@ export type SearchAssetResponseDto = {
 export type SearchResponseDto = {
     albums: SearchAlbumResponseDto;
     assets: SearchAssetResponseDto;
+};
+export type SearchPersonNameResponseDto = {
+    hasNextPage?: boolean;
+    people: PersonResponseDto[];
+    total?: number;
 };
 export type PlacesResponseDto = {
     admin1name?: string;
@@ -2467,6 +2477,24 @@ export function fixAuditFiles({ fileReportFixDto }: {
         body: fileReportFixDto
     })));
 }
+export function searchAlbum({ name, page, shared, size }: {
+    name: string;
+    page?: number;
+    shared?: boolean;
+    size?: number;
+}, opts?: Oazapfts.RequestOpts) {
+    return oazapfts.ok(oazapfts.fetchJson<{
+        status: 200;
+        data: SearchAlbumNameResponseDto;
+    }>(`/search/album${QS.query(QS.explode({
+        name,
+        page,
+        shared,
+        size
+    }))}`, {
+        ...opts
+    }));
+}
 export function getAssetsByCity(opts?: Oazapfts.RequestOpts) {
     return oazapfts.ok(oazapfts.fetchJson<{
         status: 200;
@@ -2495,15 +2523,19 @@ export function searchMetadata({ metadataSearchDto }: {
         body: metadataSearchDto
     })));
 }
-export function searchPerson({ name, withHidden }: {
+export function searchPerson({ name, page, size, withHidden }: {
     name: string;
+    page?: number;
+    size?: number;
     withHidden?: boolean;
 }, opts?: Oazapfts.RequestOpts) {
     return oazapfts.ok(oazapfts.fetchJson<{
         status: 200;
-        data: PersonResponseDto[];
+        data: SearchPersonNameResponseDto;
     }>(`/search/person${QS.query(QS.explode({
         name,
+        page,
+        size,
         withHidden
     }))}`, {
         ...opts

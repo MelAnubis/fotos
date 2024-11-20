@@ -193,5 +193,5 @@ export const mapAlbum = (entity: AlbumEntity, withAssets: boolean, auth?: AuthDt
   };
 };
 
-export const mapAlbumWithAssets = (entity: AlbumEntity) => mapAlbum(entity, true);
-export const mapAlbumWithoutAssets = (entity: AlbumEntity) => mapAlbum(entity, false);
+export const mapAlbumWithAssets = (entity: AlbumEntity): AlbumResponseDto => mapAlbum(entity, true);
+export const mapAlbumWithoutAssets = (entity: AlbumEntity): AlbumResponseDto => mapAlbum(entity, false);
