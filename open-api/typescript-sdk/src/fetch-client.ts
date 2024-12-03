@@ -993,8 +993,22 @@ export type ServerStorageResponseDto = {
     diskUse: string;
     diskUseRaw: number;
 };
+export type SystemConfigThemeCustomDto = {
+    bg: string;
+    error: string;
+    fg: string;
+    gray: string;
+    primary: string;
+    success: string;
+    warning: string;
+};
+export type SystemConfigThemeThemesDto = {
+    dark: SystemConfigThemeCustomDto;
+    light: SystemConfigThemeCustomDto;
+};
 export type ServerThemeDto = {
     customCss: string;
+    themes: SystemConfigThemeThemesDto;
 };
 export type ServerVersionResponseDto = {
     major: number;
@@ -1232,6 +1246,7 @@ export type SystemConfigStorageTemplateDto = {
 };
 export type SystemConfigThemeDto = {
     customCss: string;
+    themes: SystemConfigThemeThemesDto;
 };
 export type SystemConfigTrashDto = {
     days: number;

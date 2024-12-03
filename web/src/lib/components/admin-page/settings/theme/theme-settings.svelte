@@ -1,11 +1,14 @@
 <script lang="ts">
-  import type { SystemConfigDto } from '@immich/sdk';
+  import type { SystemConfigDto, SystemConfigThemeCustomDto, SystemConfigThemeThemesDto } from '@immich/sdk';
   import { isEqual } from 'lodash-es';
   import { fade } from 'svelte/transition';
   import type { SettingsResetEvent, SettingsSaveEvent } from '../admin-settings';
   import SettingTextarea from '$lib/components/shared-components/settings/setting-textarea.svelte';
   import SettingButtonsRow from '$lib/components/shared-components/settings/setting-buttons-row.svelte';
   import { t } from 'svelte-i18n';
+  import SettingsColorpicker from '$lib/components/shared-components/settings/settings-colorpicker.svelte';
+  import SettingAccordion from '$lib/components/shared-components/settings/setting-accordion.svelte';
+  import { hexToRgb } from '$lib/utils/colors';
 
   interface Props {
     savedConfig: SystemConfigDto;
@@ -21,6 +24,32 @@
   const onsubmit = (event: Event) => {
     event.preventDefault();
   };
+
+  type ThemeKeys = keyof SystemConfigThemeThemesDto;
+  type ThemeColorKeys = keyof SystemConfigThemeCustomDto;
+
+  const themes: ThemeKeys[] = ['light', 'dark'];
+
+  const colors: { key: ThemeColorKeys }[] = [
+    { key: 'primary' },
+    { key: 'bg' },
+    { key: 'fg' },
+    { key: 'gray' },
+    { key: 'warning' },
+    { key: 'error' },
+    { key: 'success' },
+  ];
+
+  const colorLivePreview = (color: string, cssTag: string) => {
+    const root = document.querySelector(':root') as HTMLElement;
+    if (root) {
+      root.style.setProperty(cssTag, hexToRgb(color));
+    }
+  };
+
+  const setThemeColor = (color: string, key: ThemeColorKeys, theme: ThemeKeys) => {
+    config.theme.themes[theme][key] = color;
+  };
 </script>
 
 <div>
@@ -35,9 +64,34 @@
           isEdited={config.theme.customCss !== savedConfig.theme.customCss}
         />
 
+        {#each themes as theme}
+          <SettingAccordion
+            key="theme_colors"
+            title={$t(`admin.theme_customize`, { values: { theme: theme } })}
+            subtitle={$t(`admin.theme_customize_subtitle`, { values: { theme: theme } })}
+          >
+            {#each colors as { key }}
+              <SettingsColorpicker
+                {disabled}
+                label={$t(`admin.theme_${key}_color`, { values: { theme: theme } })}
+                value={config.theme.themes[theme][key]}
+                required={true}
+                isEdited={config.theme.themes[theme][key] !== savedConfig.theme.themes[theme][key]}
+                onChange={(color) => {
+                  colorLivePreview(color, theme === 'light' ? `--immich-${key}` : `--immich-${theme}-${key}`);
+                  setThemeColor(color, key, theme);
+                }}
+              />
+            {/each}</SettingAccordion
+          >{/each}
+
+        {config.theme.themes.light.primary}
+
         <SettingButtonsRow
           onReset={(options) => onReset({ ...options, configKeys: ['theme'] })}
-          onSave={() => onSave({ theme: config.theme })}
+          onSave={() => {
+            onSave({ theme: { customCss: config.theme.customCss, themes: config.theme.themes } });
+          }}
           showResetToDefault={!isEqual(savedConfig, defaultConfig)}
           {disabled}
         />
