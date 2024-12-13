@@ -34,6 +34,7 @@
     isShowDeleteConfirmation?: boolean;
     onPrevious?: (() => Promise<AssetResponseDto | undefined>) | undefined;
     onNext?: (() => Promise<AssetResponseDto | undefined>) | undefined;
+    showOwnerAvatar?: boolean;
   }
 
   let {
@@ -47,6 +48,7 @@
     isShowDeleteConfirmation = $bindable(false),
     onPrevious = undefined,
     onNext = undefined,
+    showOwnerAvatar = false,
   }: Props = $props();
 
   let { isViewing: isViewerOpen, asset: viewingAsset, setAsset } = assetViewingStore;
@@ -355,6 +357,7 @@
           selectionCandidate={$assetSelectionCandidates.has(asset)}
           thumbnailWidth={geometry.boxes[i].width}
           thumbnailHeight={geometry.boxes[i].height}
+          {showOwnerAvatar}
         />
         {#if showAssetName}
           <div

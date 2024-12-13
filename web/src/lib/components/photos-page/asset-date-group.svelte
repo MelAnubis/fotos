@@ -20,6 +20,7 @@
   export let singleSelect = false;
   export let withStacked = false;
   export let showArchiveIcon = false;
+  export let showOwnerAvatar = true;
   export let assetGridElement: HTMLElement | undefined = undefined;
   export let renderThumbsAtBottomMargin: string | undefined = undefined;
   export let renderThumbsAtTopMargin: string | undefined = undefined;
@@ -207,6 +208,7 @@
                   onRetrieveElement={(element) => onRetrieveElement(dateGroup, asset, element)}
                   showStackedIcon={withStacked}
                   {showArchiveIcon}
+                  {showOwnerAvatar}
                   {asset}
                   {groupIndex}
                   onClick={(asset) => onClick(dateGroup.assets, dateGroup.groupTitle, asset)}

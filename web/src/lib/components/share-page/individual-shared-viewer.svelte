@@ -112,6 +112,6 @@
     </ControlAppBar>
   {/if}
   <section class="my-[160px] mx-4" bind:clientHeight={viewport.height} bind:clientWidth={viewport.width}>
-    <GalleryViewer {assets} {assetInteractionStore} {viewport} />
+    <GalleryViewer {assets} {assetInteractionStore} {viewport} showOwnerAvatar={false} />
   </section>
 </section>

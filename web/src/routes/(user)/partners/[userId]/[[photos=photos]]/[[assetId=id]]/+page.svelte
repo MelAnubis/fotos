@@ -50,5 +50,5 @@
       {/snippet}
     </ControlAppBar>
   {/if}
-  <AssetGrid enableRouting={true} {assetStore} {assetInteractionStore} />
+  <AssetGrid enableRouting={true} {assetStore} {assetInteractionStore} showUserThumbnailsinViewer={false} />
 </main>

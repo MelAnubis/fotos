@@ -57,6 +57,7 @@
     onEscape?: () => void;
     children?: Snippet;
     empty?: Snippet;
+    showOwnerAvatar?: boolean;
   }
 
   let {
@@ -75,6 +76,7 @@
     onEscape = () => {},
     children,
     empty,
+    showOwnerAvatar = false,
   }: Props = $props();
 
   let { isViewing: showAssetViewer, asset: viewingAsset, preloadAssets, gridScrollTarget } = assetViewingStore;
@@ -888,6 +890,7 @@
             renderThumbsAtBottomMargin={THUMBNAIL_INTERSECTION_ROOT_BOTTOM}
             {withStacked}
             {showArchiveIcon}
+            {showOwnerAvatar}
             {assetStore}
             {assetInteractionStore}
             {isSelectionMode}
