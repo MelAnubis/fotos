@@ -32,9 +32,10 @@ interface DecodeImageOptions {
 export interface DecodeToBufferOptions extends DecodeImageOptions {
   size?: number;
   orientation?: ExifOrientation;
+  keepExif?: boolean;
 }
 
-export type GenerateThumbnailOptions = ImageOptions & DecodeImageOptions;
+export type GenerateThumbnailOptions = Pick<ImageOptions, 'format' | 'quality'> & DecodeToBufferOptions;
 
 export type GenerateThumbnailFromBufferOptions = GenerateThumbnailOptions & { raw: RawImageInfo };
 
@@ -137,7 +138,8 @@ export interface VideoInterfaces {
 
 export interface IMediaRepository {
   // image
-  extract(input: string, output: string): Promise<boolean>;
+  extract(input: string, output: string, withExif?: boolean): Promise<boolean>;
+  cloneExif(input: string, output: string): Promise<boolean>;
   decodeImage(input: string, options: DecodeToBufferOptions): Promise<ImageBuffer>;
   generateThumbnail(input: string, options: GenerateThumbnailOptions, outputFile: string): Promise<void>;
   generateThumbnail(input: Buffer, options: GenerateThumbnailFromBufferOptions, outputFile: string): Promise<void>;
