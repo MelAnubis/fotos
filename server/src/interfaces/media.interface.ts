@@ -139,7 +139,7 @@ export interface VideoInterfaces {
 export interface IMediaRepository {
   // image
   extract(input: string, output: string, withExif?: boolean): Promise<boolean>;
-  writeExif(tags: ExifEntity, output: string): Promise<boolean>;
+  writeExif(tags: Partial<ExifEntity>, output: string): Promise<boolean>;
   decodeImage(input: string, options: DecodeToBufferOptions): Promise<ImageBuffer>;
   generateThumbnail(input: string, options: GenerateThumbnailOptions, outputFile: string): Promise<void>;
   generateThumbnail(input: Buffer, options: GenerateThumbnailFromBufferOptions, outputFile: string): Promise<void>;
